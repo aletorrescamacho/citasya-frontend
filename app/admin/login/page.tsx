@@ -45,11 +45,16 @@ export default function AdminLogin() {
   
       // Asumiendo que el backend te devuelve { empresaSlug: "tamanaco-spa" }
       const empresaSlug = data.empresaSlug
+     
+
   
       if (!empresaSlug) {
         throw new Error("Error al obtener empresa")
       }
   
+
+      localStorage.setItem("auth_empresa_slug", empresaSlug);
+
       router.push(`/admin/${empresaSlug}/dashboard`)
     } catch (err: any) {
       console.error(err)
