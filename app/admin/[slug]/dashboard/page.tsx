@@ -1,5 +1,7 @@
 "use client"
 
+import { DialogTrigger } from "@/components/ui/dialog"
+
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
@@ -24,6 +26,12 @@ import {
   ArrowLeft,
   AlertCircle,
   LogOut,
+  BarChart2,
+  TrendingUp,
+  PieChart,
+  Activity,
+  CalendarIcon,
+  User,
 } from "lucide-react"
 import {
   Dialog,
@@ -32,9 +40,23 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  PieChart as RechartsPieChart,
+  Pie,
+  Cell,
+  LineChart,
+  Line,
+} from "recharts"
 
 interface Servicio {
   id: number
@@ -67,6 +89,20 @@ interface Cita {
 
 const diasSemana = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]
 
+// Colores para los gráficos
+const COLORS = [
+  "#0088FE",
+  "#00C49F",
+  "#FFBB28",
+  "#FF8042",
+  "#8884D8",
+  "#82CA9D",
+  "#F06292",
+  "#4DB6AC",
+  "#FFD54F",
+  "#9575CD",
+]
+
 export default function AdminDashboard() {
   const { slug } = useParams()
   const router = useRouter()
@@ -74,8 +110,46 @@ export default function AdminDashboard() {
   const [servicios, setServicios] = useState<Servicio[]>([])
   const [empleados, setEmpleados] = useState<Empleado[]>([])
   const [citas, setCitas] = useState<Cita[]>([])
+  const [totalCitas, setTotalCitas] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+
+  const [stats, setStats] = useState({
+    porMes: {},
+    porEmpleado: {},
+    porServicio: {},
+    porDia: {},
+    porAnio: {},
+  })
+
+  useEffect(() => {
+    const fetchEstadisticas = async () => {
+      try {
+        const [mes, emp, serv, dia, anio] = await Promise.all([
+          fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/estadisticas/${slug}/citas-por-mes`).then((r) =>
+            r.json(),
+          ),
+          fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/estadisticas/${slug}/citas-por-empleado`).then((r) =>
+            r.json(),
+          ),
+          fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/estadisticas/${slug}/citas-por-servicio`).then((r) =>
+            r.json(),
+          ),
+          fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/estadisticas/${slug}/citas-por-dia-ultimos-7`).then((r) =>
+            r.json(),
+          ),
+          fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/estadisticas/${slug}/citas-por-anio`).then((r) =>
+            r.json(),
+          ),
+        ])
+        setStats({ porMes: mes, porEmpleado: emp, porServicio: serv, porDia: dia, porAnio: anio })
+      } catch (err) {
+        console.error("Error al cargar estadísticas", err)
+      }
+    }
+
+    if (slug) fetchEstadisticas()
+  }, [slug])
 
   const [nuevoServicio, setNuevoServicio] = useState({ nombre: "", duracion: "", precio: "" })
   const [nuevoEmpleado, setNuevoEmpleado] = useState({ nombre: "" })
@@ -97,6 +171,37 @@ export default function AdminDashboard() {
   const [confirmAction, setConfirmAction] = useState<() => Promise<void>>(() => async () => {})
   const [confirmMessage, setConfirmMessage] = useState("")
 
+  // Preparar datos para los gráficos
+  const prepararDatosGraficos = () => {
+    // Datos para gráfico de barras por mes
+    const datosPorMes = Object.entries(stats.porMes).map(([mes, cantidad]) => ({
+      name: mes,
+      citas: cantidad,
+    }))
+
+    // Datos para gráfico de pastel por servicio
+    const datosPorServicio = Object.entries(stats.porServicio).map(([servicio, cantidad]) => ({
+      name: servicio,
+      value: cantidad,
+    }))
+
+    // Datos para gráfico de barras por empleado
+    const datosPorEmpleado = Object.entries(stats.porEmpleado).map(([empleado, cantidad]) => ({
+      name: empleado,
+      citas: cantidad,
+    }))
+
+    // Datos para gráfico de línea por día
+    const datosPorDia = Object.entries(stats.porDia).map(([dia, cantidad]) => ({
+      name: dia,
+      citas: cantidad,
+    }))
+
+    return { datosPorMes, datosPorServicio, datosPorEmpleado, datosPorDia }
+  }
+
+  const { datosPorMes, datosPorServicio, datosPorEmpleado, datosPorDia } = prepararDatosGraficos()
+
   // Verificar autenticación
   useEffect(() => {
     const authSlug = localStorage.getItem("auth_empresa_slug")
@@ -111,25 +216,28 @@ export default function AdminDashboard() {
         setLoading(true)
         setError("")
         try {
-          const [serviciosRes, empleadosRes, citasRes] = await Promise.all([
+          const [serviciosRes, empleadosRes, citasRes, totalCitasRes] = await Promise.all([
             fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/empresa/${slug}/servicios`),
             fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/empresa/${slug}/empleados`),
             fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/citas/${slug}`),
+            fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/citas/${slug}/total`),
           ])
 
-          if (!serviciosRes.ok || !empleadosRes.ok || !citasRes.ok) {
+          if (!serviciosRes.ok || !empleadosRes.ok || !citasRes.ok || !totalCitasRes.ok) {
             throw new Error("Error al cargar datos")
           }
 
-          const [serviciosData, empleadosData, citasData] = await Promise.all([
+          const [serviciosData, empleadosData, citasData, totalCitasData] = await Promise.all([
             serviciosRes.json(),
             empleadosRes.json(),
             citasRes.json(),
+            totalCitasRes.json(),
           ])
 
           setServicios(serviciosData)
           setEmpleados(empleadosData)
           setCitas(citasData)
+          setTotalCitas(totalCitasData.total)
         } catch (err) {
           setError("Error al cargar datos. Por favor, intenta nuevamente.")
           console.error(err)
@@ -396,18 +504,31 @@ export default function AdminDashboard() {
         )}
 
         <Tabs defaultValue="citas" className="space-y-6">
-          <TabsList className="grid grid-cols-3 w-full max-w-md">
-            <TabsTrigger value="citas" className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              <span>Citas</span>
+          {/* Reemplazar la sección de TabsList con esta implementación simplificada */}
+          <TabsList className="grid grid-cols-4 w-full max-w-md">
+            <TabsTrigger value="citas" className="px-4">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                <span>Citas</span>
+              </div>
             </TabsTrigger>
-            <TabsTrigger value="servicios" className="flex items-center gap-2">
-              <Scissors className="h-4 w-4" />
-              <span>Servicios</span>
+            <TabsTrigger value="servicios" className="px-4">
+              <div className="flex items-center gap-2">
+                <Scissors className="h-4 w-4" />
+                <span>Servicios</span>
+              </div>
             </TabsTrigger>
-            <TabsTrigger value="empleados" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              <span>Empleados</span>
+            <TabsTrigger value="empleados" className="px-4">
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                <span>Empleados</span>
+              </div>
+            </TabsTrigger>
+            <TabsTrigger value="estadisticas" className="px-4">
+              <div className="flex items-center gap-2">
+                <BarChart2 className="h-4 w-4" />
+                <span>Estadísticas</span>
+              </div>
             </TabsTrigger>
           </TabsList>
 
@@ -893,6 +1014,184 @@ export default function AdminDashboard() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Sección de Estadísticas */}
+          <TabsContent value="estadisticas" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Resumen de Estadísticas */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5 text-primary" />
+                    Resumen de Actividad
+                  </CardTitle>
+                  <CardDescription>Métricas clave de tu negocio</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex flex-col items-center justify-center p-4 bg-primary/5 rounded-lg">
+                      <CalendarIcon className="h-8 w-8 text-primary mb-2" />
+                      <p className="text-sm text-muted-foreground">Total Citas</p>
+                      <p className="text-2xl font-bold">{totalCitas}</p>
+                    </div>
+                    <div className="flex flex-col items-center justify-center p-4 bg-secondary/5 rounded-lg">
+                      <User className="h-8 w-8 text-secondary mb-2" />
+                      <p className="text-sm text-muted-foreground">Empleados</p>
+                      <p className="text-2xl font-bold">{empleados.length}</p>
+                    </div>
+                    <div className="flex flex-col items-center justify-center p-4 bg-primary/5 rounded-lg">
+                      <Scissors className="h-8 w-8 text-primary mb-2" />
+                      <p className="text-sm text-muted-foreground">Servicios</p>
+                      <p className="text-2xl font-bold">{servicios.length}</p>
+                    </div>
+                    <div className="flex flex-col items-center justify-center p-4 bg-secondary/5 rounded-lg">
+                      <Activity className="h-8 w-8 text-secondary mb-2" />
+                      <p className="text-sm text-muted-foreground">Tasa de Ocupación</p>
+                      <p className="text-2xl font-bold">
+                        {empleados.length > 0 ? Math.round((totalCitas / empleados.length) * 10) / 10 : 0}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Gráfico de Citas por Servicio */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center gap-2">
+                    <PieChart className="h-5 w-5 text-primary" />
+                    Citas por Servicio
+                  </CardTitle>
+                  <CardDescription>Distribución de citas según el tipo de servicio</CardDescription>
+                </CardHeader>
+                <CardContent className="flex justify-center items-center h-[300px]">
+                  {datosPorServicio.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RechartsPieChart>
+                        <Pie
+                          data={datosPorServicio}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={true}
+                          outerRadius={80}
+                          fill="#8884d8"
+                          dataKey="value"
+                          label={({ name, percent }) => {
+                            // Acortar el nombre si es necesario para la etiqueta en el gráfico
+                            const displayName = name.length > 12 ? `${name.substring(0, 10)}...` : name
+                            return `${(percent * 100).toFixed(0)}%`
+                          }}
+                        >
+                          {datosPorServicio.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(value) => [`${value} citas`, "Cantidad"]} />
+                        <Legend width={280} />
+                      </RechartsPieChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <PieChart className="h-12 w-12 mx-auto mb-2 text-muted-foreground/50" />
+                      <p>No hay datos disponibles</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Gráfico de Citas por Mes */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart2 className="h-5 w-5 text-primary" />
+                    Citas por Mes
+                  </CardTitle>
+                  <CardDescription>Evolución mensual de las citas</CardDescription>
+                </CardHeader>
+                <CardContent className="h-[300px]">
+                  {datosPorMes.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={datosPorMes} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip formatter={(value) => [`${value} citas`, "Cantidad"]} />
+                        <Bar dataKey="citas" fill="#0088FE" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <BarChart2 className="h-12 w-12 mx-auto mb-2 text-muted-foreground/50" />
+                      <p>No hay datos disponibles</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Gráfico de Citas por Empleado */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5 text-primary" />
+                    Citas por Empleado
+                  </CardTitle>
+                  <CardDescription>Distribución de citas por miembro del equipo</CardDescription>
+                </CardHeader>
+                <CardContent className="h-[300px]">
+                  {datosPorEmpleado.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={datosPorEmpleado}
+                        layout="vertical"
+                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis type="number" />
+                        <YAxis dataKey="name" type="category" width={100} />
+                        <Tooltip formatter={(value) => [`${value} citas`, "Cantidad"]} />
+                        <Bar dataKey="citas" fill="#00C49F" radius={[0, 4, 4, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Users className="h-12 w-12 mx-auto mb-2 text-muted-foreground/50" />
+                      <p>No hay datos disponibles</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Gráfico de Citas por Día (últimos 7 días) */}
+              <Card className="md:col-span-2">
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center gap-2">
+                    <Activity className="h-5 w-5 text-primary" />
+                    Citas por Día (últimos 7 días)
+                  </CardTitle>
+                  <CardDescription>Tendencia de citas en la última semana</CardDescription>
+                </CardHeader>
+                <CardContent className="h-[300px]">
+                  {datosPorDia.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={datosPorDia} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip formatter={(value) => [`${value} citas`, "Cantidad"]} />
+                        <Legend />
+                        <Line type="monotone" dataKey="citas" stroke="#8884d8" activeDot={{ r: 8 }} strokeWidth={2} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Activity className="h-12 w-12 mx-auto mb-2 text-muted-foreground/50" />
+                      <p>No hay datos disponibles</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </main>
