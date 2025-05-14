@@ -89,6 +89,22 @@ interface Cita {
 
 const diasSemana = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]
 
+// Agregar este array de duraciones permitidas después de la declaración de diasSemana
+const duracionesPermitidas = [
+  { valor: 30, etiqueta: "30 minutos" },
+  { valor: 60, etiqueta: "1 hora" },
+  { valor: 90, etiqueta: "1 hora y 30 minutos" },
+  { valor: 120, etiqueta: "2 horas" },
+  { valor: 150, etiqueta: "2 horas y 30 minutos" },
+  { valor: 180, etiqueta: "3 horas" },
+  { valor: 210, etiqueta: "3 horas y 30 minutos" },
+  { valor: 240, etiqueta: "4 horas" },
+  { valor: 270, etiqueta: "4 horas y 30 minutos" },
+  { valor: 300, etiqueta: "5 horas" },
+  { valor: 330, etiqueta: "5 horas y 30 minutos" },
+  { valor: 360, etiqueta: "6 horas" },
+]
+
 // Colores para los gráficos
 const COLORS = [
   "#0088FE",
@@ -151,13 +167,15 @@ export default function AdminDashboard() {
     if (slug) fetchEstadisticas()
   }, [slug])
 
-  const [nuevoServicio, setNuevoServicio] = useState({ nombre: "", duracion: "", precio: "" })
+  // Modificar el estado nuevoServicio para que duracion sea un número en lugar de string
+  const [nuevoServicio, setNuevoServicio] = useState({ nombre: "", duracion: 30, precio: "" })
   const [nuevoEmpleado, setNuevoEmpleado] = useState({ nombre: "" })
 
   const [servicioSeleccionado, setServicioSeleccionado] = useState<Servicio | null>(null)
   const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState<Empleado | null>(null)
 
-  const [editarServicio, setEditarServicio] = useState({ nombre: "", duracion: "", precio: "" })
+  // Modificar el estado editarServicio para que duracion sea un número
+  const [editarServicio, setEditarServicio] = useState({ nombre: "", duracion: 30, precio: "" })
   const [editarEmpleado, setEditarEmpleado] = useState({
     nombre: "",
     horarios: [] as Horario[],
@@ -256,7 +274,8 @@ export default function AdminDashboard() {
   }
 
   const crearServicio = async () => {
-    const duracion = Number.parseInt(nuevoServicio.duracion)
+    // Modificar la función crearServicio para que no necesite convertir la duración
+    const duracion = nuevoServicio.duracion
     const precio = Number.parseFloat(nuevoServicio.precio)
     if (!nuevoServicio.nombre || isNaN(duracion) || duracion < 1 || isNaN(precio) || precio < 0) {
       setError("Datos inválidos para servicio")
@@ -307,7 +326,8 @@ export default function AdminDashboard() {
 
   const editarServicioSubmit = async () => {
     if (!servicioSeleccionado) return
-    const duracion = Number.parseInt(editarServicio.duracion)
+    // Modificar la función editarServicioSubmit para que no necesite convertir la duración
+    const duracion = editarServicio.duracion
     const precio = Number.parseFloat(editarServicio.precio)
     if (!editarServicio.nombre || isNaN(duracion) || duracion < 1 || isNaN(precio) || precio < 0) {
       setError("Datos inválidos al editar servicio")
@@ -374,6 +394,7 @@ export default function AdminDashboard() {
     const empleado = empleados.find((e) => e.id === id)
     if (empleado) {
       setEmpleadoSeleccionado(empleado)
+      // Modificar la función que establece el estado de editarServicio al seleccionar un servicio
       setEditarEmpleado({
         nombre: empleado.nombre,
         horarios: empleado.horarios || [],
@@ -600,15 +621,26 @@ export default function AdminDashboard() {
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
+                    {/* Reemplazar el input de duración en el formulario de crear servicio (buscar la sección con id="duracion-servicio") */}
                     <div className="grid gap-2">
-                      <Label htmlFor="duracion-servicio">Duración (minutos)</Label>
-                      <Input
-                        id="duracion-servicio"
-                        type="number"
-                        min={1}
-                        placeholder="30"
-                        onChange={(e) => setNuevoServicio({ ...nuevoServicio, duracion: e.target.value })}
-                      />
+                      <Label htmlFor="duracion-servicio">Duración</Label>
+                      <Select
+                        value={nuevoServicio.duracion.toString()}
+                        onValueChange={(value) =>
+                          setNuevoServicio({ ...nuevoServicio, duracion: Number.parseInt(value) })
+                        }
+                      >
+                        <SelectTrigger id="duracion-servicio">
+                          <SelectValue placeholder="Selecciona la duración" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {duracionesPermitidas.map((duracion) => (
+                            <SelectItem key={duracion.valor} value={duracion.valor.toString()}>
+                              {duracion.etiqueta}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div className="grid gap-2">
                       <Label htmlFor="precio-servicio">Precio</Label>
@@ -668,9 +700,10 @@ export default function AdminDashboard() {
                                       size="icon"
                                       onClick={() => {
                                         setServicioSeleccionado(s)
+                                        // Modificar la función que establece el estado de editarServicio al seleccionar un servicio
                                         setEditarServicio({
                                           nombre: s.nombre,
-                                          duracion: s.duracion.toString(),
+                                          duracion: s.duracion,
                                           precio: s.precio.toString(),
                                         })
                                       }}
@@ -697,17 +730,26 @@ export default function AdminDashboard() {
                                         />
                                       </div>
                                       <div className="grid grid-cols-2 gap-4">
+                                        {/* Reemplazar el input de duración en el formulario de editar servicio */}
                                         <div className="grid gap-2">
-                                          <Label htmlFor="edit-duracion">Duración (min)</Label>
-                                          <Input
-                                            id="edit-duracion"
-                                            type="number"
-                                            min={1}
-                                            value={editarServicio.duracion}
-                                            onChange={(e) =>
-                                              setEditarServicio({ ...editarServicio, duracion: e.target.value })
+                                          <Label htmlFor="edit-duracion">Duración</Label>
+                                          <Select
+                                            value={editarServicio.duracion.toString()}
+                                            onValueChange={(value) =>
+                                              setEditarServicio({ ...editarServicio, duracion: Number.parseInt(value) })
                                             }
-                                          />
+                                          >
+                                            <SelectTrigger id="edit-duracion">
+                                              <SelectValue placeholder="Selecciona la duración" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                              {duracionesPermitidas.map((duracion) => (
+                                                <SelectItem key={duracion.valor} value={duracion.valor.toString()}>
+                                                  {duracion.etiqueta}
+                                                </SelectItem>
+                                              ))}
+                                            </SelectContent>
+                                          </Select>
                                         </div>
                                         <div className="grid gap-2">
                                           <Label htmlFor="edit-precio">Precio</Label>
