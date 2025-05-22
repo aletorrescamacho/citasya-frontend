@@ -17,7 +17,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
-  Calendar,
   Clock,
   Users,
   Scissors,
@@ -32,7 +31,6 @@ import {
   TrendingUp,
   PieChart,
   Activity,
-  CalendarIcon,
   User,
   History,
   Search,
@@ -61,6 +59,14 @@ import {
   LineChart,
   Line,
 } from "recharts"
+
+// Primero, importemos los componentes necesarios para el DatePicker
+// Añade estas importaciones junto con las demás importaciones al inicio del archivo
+import { format as formatDate, isAfter, isBefore } from "date-fns"
+import { es } from "date-fns/locale"
+import { CalendarIcon } from "lucide-react"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Calendar } from "@/components/ui/calendar"
 
 interface Servicio {
   id: number
@@ -247,6 +253,15 @@ export default function AdminDashboard() {
   const [totalCitas, setTotalCitas] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+
+  // Ahora, dentro del componente AdminDashboard, añade estos estados para el filtro de fechas
+  // Añade esto junto a los demás estados del componente
+  // Busca esta sección:
+  // const [fechaInicio, setFechaInicio] = useState<Date | undefined>(undefined)
+  // const [fechaFin, setFechaFin] = useState<Date | undefined>(undefined)
+
+  // Y reemplázala con:
+  const [fechaSeleccionada, setFechaSeleccionada] = useState<Date | undefined>(undefined)
 
   const [stats, setStats] = useState({
     porMes: {},
@@ -576,6 +591,30 @@ export default function AdminDashboard() {
     })
   }
 
+  // Añade esta función para filtrar las citas por fecha
+  // Coloca esta función junto a las demás funciones del componente
+  // Busca la función citasFiltradas y reemplázala con:
+  const citasFiltradas = citas.filter((cita) => {
+    if (!fechaSeleccionada) return true
+
+    try {
+      // Convertir ambas fechas a formato YYYY-MM-DD para comparación simple
+      const fechaCitaStr = cita.fecha.split("T")[0] // Asegurarse de obtener solo la parte de la fecha
+      const fechaSeleccionadaStr = fechaSeleccionada.toISOString().split("T")[0]
+
+      return fechaCitaStr === fechaSeleccionadaStr
+    } catch (error) {
+      console.error("Error al filtrar cita:", error, cita)
+      return false
+    }
+  })
+
+  // Función para limpiar los filtros
+  // Reemplaza la función limpiarFiltros con:
+  const limpiarFiltros = () => {
+    setFechaSeleccionada(undefined)
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-muted/30">
@@ -647,7 +686,7 @@ export default function AdminDashboard() {
           <TabsList className="flex justify-between w-full max-w-3xl">
             <TabsTrigger value="citas" className="px-4">
               <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
+                <CalendarIcon className="h-4 w-4" />
                 <span>Citas</span>
               </div>
             </TabsTrigger>
@@ -682,47 +721,117 @@ export default function AdminDashboard() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-primary" />
+                  <CalendarIcon className="h-5 w-5 text-primary" />
                   Citas Programadas
                 </CardTitle>
                 <CardDescription>Visualiza todas las citas programadas en tu negocio</CardDescription>
               </CardHeader>
+              {/* Reemplaza el CardContent de la sección de citas con este código: */}
+              {/* Busca la sección que comienza con <CardContent> dentro del TabsContent con value="citas" */}
+              {/* y reemplázala con el siguiente código: */}
               <CardContent>
-                {citas.length > 0 ? (
-                  <div className="rounded-md border">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Cliente</TableHead>
-                          <TableHead>Fecha</TableHead>
-                          <TableHead>Hora</TableHead>
-                          <TableHead>Servicio</TableHead>
-                          <TableHead>Empleado</TableHead>
-                          <TableHead>Correo</TableHead>
-                          <TableHead>Teléfono</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {citas.map((c) => (
-                          <TableRow key={c.id}>
-                            <TableCell className="font-medium">{c.clienteNombre}</TableCell>
-                            <TableCell>{formatFecha(c.fecha)}</TableCell>
-                            <TableCell>{c.hora}</TableCell>
-                            <TableCell>{c.servicio.nombre}</TableCell>
-                            <TableCell>{c.empleado?.nombre || "(sin asignar)"}</TableCell>
-                            <TableCell>{c.correo || "-"}</TableCell>
-                            <TableCell>{c.telefono || "-"}</TableCell>
+                <div className="space-y-4">
+                  {/* Filtros de fecha */}
+                  {/* Ahora, reemplaza la sección de filtros de fecha en el CardContent de la sección de citas
+                  // Busca la sección que comienza con "Filtros de fecha" y reemplázala con: */}
+                  <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor="fecha-seleccionada">Seleccionar día</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            id="fecha-seleccionada"
+                            variant="outline"
+                            className="w-[240px] justify-start text-left font-normal"
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {fechaSeleccionada ? (
+                              formatDate(fechaSeleccionada, "EEEE d 'de' MMMM", { locale: es })
+                            ) : (
+                              <span>Seleccionar fecha</span>
+                            )}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                          <Calendar
+                            mode="single"
+                            selected={fechaSeleccionada}
+                            onSelect={setFechaSeleccionada}
+                            initialFocus
+                            locale={es}
+                            disabled={(date) => {
+                              // Solo permitir seleccionar desde hoy hasta 15 días en el futuro
+                              const today = new Date()
+                              today.setHours(0, 0, 0, 0)
+
+                              const maxDate = new Date()
+                              maxDate.setDate(maxDate.getDate() + 15)
+                              maxDate.setHours(23, 59, 59, 999)
+
+                              return isBefore(date, today) || isAfter(date, maxDate)
+                            }}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+
+                    {fechaSeleccionada && (
+                      <Button variant="ghost" onClick={limpiarFiltros} className="mt-6">
+                        Mostrar todas las citas
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Contador de resultados */}
+                  <div className="text-sm text-muted-foreground">
+                    {citasFiltradas.length === citas.length
+                      ? `Mostrando todas las citas (${citas.length})`
+                      : `Mostrando ${citasFiltradas.length} ${citasFiltradas.length === 1 ? "cita" : "citas"} para el ${fechaSeleccionada ? fechaSeleccionada.toLocaleDateString("es-ES", { day: "numeric", month: "long" }) : ""}`}
+                  </div>
+
+                  {/* Tabla de citas */}
+                  {citasFiltradas.length > 0 ? (
+                    <div className="rounded-md border">
+                    
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Cliente</TableHead>
+                            <TableHead>Fecha</TableHead>
+                            <TableHead>Hora</TableHead>
+                            <TableHead>Servicio</TableHead>
+                            <TableHead>Empleado</TableHead>
+                            <TableHead>Correo</TableHead>
+                            <TableHead>Teléfono</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Calendar className="h-12 w-12 mx-auto mb-2 text-muted-foreground/50" />
-                    <p>No hay citas programadas</p>
-                  </div>
-                )}
+                        </TableHeader>
+                        <TableBody>
+                          {citasFiltradas.map((c) => (
+                            <TableRow key={c.id}>
+                              <TableCell className="font-medium">{c.clienteNombre}</TableCell>
+                              <TableCell>{formatFecha(c.fecha)}</TableCell>
+                              <TableCell>{c.hora}</TableCell>
+                              <TableCell>{c.servicio.nombre}</TableCell>
+                              <TableCell>{c.empleado?.nombre || "(sin asignar)"}</TableCell>
+                              <TableCell>{c.correo || "-"}</TableCell>
+                              <TableCell>{c.telefono || "-"}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <CalendarIcon className="h-12 w-12 mx-auto mb-2 text-muted-foreground/50" />
+                      <p>No hay citas programadas para el rango de fechas seleccionado</p>
+                      {fechaSeleccionada && (
+                        <Button variant="link" onClick={limpiarFiltros} className="mt-2">
+                          Mostrar todas las citas
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
