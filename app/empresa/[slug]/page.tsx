@@ -3,10 +3,21 @@
 import type React from "react"
 
 import { useEffect, useState } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
-import { Calendar, Clock, User, Scissors, Mail, Phone, CreditCard, ArrowLeft, CheckCircle2 } from "lucide-react"
+import {
+  Calendar,
+  Clock,
+  User,
+  Scissors,
+  Mail,
+  Phone,
+  CreditCard,
+  ArrowLeft,
+  CheckCircle2,
+  XCircle,
+} from "lucide-react"
 import { format, parse } from "date-fns"
 import { es } from "date-fns/locale"
 
@@ -35,6 +46,7 @@ type HorariosParaRenderizar = HoraUnica[] | HorarioConEmpleado[]
 
 export default function ReservaPage() {
   const { slug } = useParams()
+  const router = useRouter()
   const [servicios, setServicios] = useState<Servicio[]>([])
   const [empleados, setEmpleados] = useState<Empleado[]>([])
   const [horarios, setHorarios] = useState<HorarioDisponible[]>([])
@@ -172,6 +184,10 @@ export default function ReservaPage() {
     setCurrentStep(currentStep - 1)
   }
 
+  const navigateToCancelar = () => {
+    router.push(`/empresa/${slug}/cancelar`)
+  }
+
   // Si la reserva fue exitosa, mostrar mensaje de confirmación
   if (success && reservaInfo) {
     return (
@@ -215,15 +231,23 @@ export default function ReservaPage() {
               </div>
 
               <p className="text-sm text-muted-foreground mb-6">
-                Hemos enviado los detalles a tu Whatsapp. Serás redirigido en unos segundos...
+                Hemos enviado los detalles a tu correo electrónico. Serás redirigido en unos segundos...
               </p>
 
-              <button
-                onClick={() => window.location.reload()}
-                className="bg-primary hover:bg-primary/90 text-white font-medium py-2.5 px-6 rounded-full transition-colors"
-              >
-                Reservar otra cita
-              </button>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <button
+                  onClick={() => window.location.reload()}
+                  className="bg-primary hover:bg-primary/90 text-white font-medium py-2.5 px-6 rounded-full transition-colors"
+                >
+                  Reservar otra cita
+                </button>
+                <button
+                  onClick={navigateToCancelar}
+                  className="bg-white border border-red-500 text-red-500 hover:bg-red-50 font-medium py-2.5 px-6 rounded-full transition-colors"
+                >
+                  Cancelar cita
+                </button>
+              </div>
             </div>
           </div>
         </main>
@@ -247,11 +271,18 @@ export default function ReservaPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-muted/30">
-      <header className="container flex h-16 items-center px-4">
+      <header className="container flex h-16 items-center px-4 justify-between">
         <Link href="/" className="flex items-center gap-2 text-primary hover:opacity-80 transition-opacity">
           <ArrowLeft size={20} />
           <span>Volver al inicio</span>
         </Link>
+        <button
+          onClick={navigateToCancelar}
+          className="flex items-center gap-2 text-red-500 hover:text-red-600 transition-colors"
+        >
+          <XCircle size={18} />
+          <span>Cancelar una cita</span>
+        </button>
       </header>
 
       <main className="flex-1 container py-8 px-4">

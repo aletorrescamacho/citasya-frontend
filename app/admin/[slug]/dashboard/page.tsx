@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { DialogTrigger } from "@/components/ui/dialog"
 
 import { useEffect, useState } from "react"
@@ -32,6 +34,8 @@ import {
   Activity,
   CalendarIcon,
   User,
+  History,
+  Search,
 } from "lucide-react"
 import {
   Dialog,
@@ -78,6 +82,7 @@ interface Empleado {
   servicios: { servicioId: number }[]
 }
 
+// Primero, actualicemos la interfaz Cita para incluir correo y teléfono
 interface Cita {
   id: number
   clienteNombre: string
@@ -85,6 +90,16 @@ interface Cita {
   hora: string
   servicio: { nombre: string }
   empleado?: { nombre: string }
+  correo: string
+  telefono: string
+}
+
+interface ClienteHistorico {
+  id: number
+  nombre: string
+  cedula: string
+  correo: string
+  telefono: string
 }
 
 const diasSemana = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]
@@ -118,6 +133,109 @@ const COLORS = [
   "#FFD54F",
   "#9575CD",
 ]
+
+const ClientesHistoricos = ({ slug }: { slug: string }) => {
+  const [clientes, setClientes] = useState<ClienteHistorico[]>([])
+  const [searchTerm, setSearchTerm] = useState("")
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchClientesHistoricos = async () => {
+      setLoading(true)
+      setError(null)
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/clientes-historicos/${slug}`)
+
+        if (!response.ok) {
+          throw new Error(`Error: ${response.status}`)
+        }
+        const data: ClienteHistorico[] = await response.json()
+        setClientes(data)
+      } catch (error: any) {
+        setError(error.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchClientesHistoricos()
+  }, [slug])
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value)
+  }
+
+  const filteredClientes = clientes.filter(
+    (cliente) => cliente.nombre.toLowerCase().includes(searchTerm.toLowerCase()) || cliente.cedula.includes(searchTerm),
+  )
+
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Error</AlertTitle>
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
+    )
+  }
+
+  if (loading) {
+    return (
+      <div className="text-center py-8">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+        <p className="text-muted-foreground">Cargando datos de clientes históricos...</p>
+      </div>
+    )
+  }
+
+  if (clientes.length === 0) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        <User className="h-12 w-12 mx-auto mb-2 text-muted-foreground/50" />
+        <p>No hay datos de clientes históricos disponibles</p>
+        <p className="text-sm mt-2">No se han encontrado clientes con citas anteriores.</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Buscar por nombre o cédula..."
+          value={searchTerm}
+          onChange={handleSearchChange}
+          className="pl-10"
+        />
+      </div>
+
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Nombre</TableHead>
+              <TableHead>Cédula</TableHead>
+              <TableHead>Correo</TableHead>
+              <TableHead>Teléfono</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredClientes.map((cliente) => (
+              <TableRow key={cliente.id}>
+                <TableCell className="font-medium">{cliente.nombre}</TableCell>
+                <TableCell>{cliente.cedula}</TableCell>
+                <TableCell>{cliente.correo}</TableCell>
+                <TableCell>{cliente.telefono}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
+  )
+}
 
 export default function AdminDashboard() {
   const { slug } = useParams()
@@ -526,7 +644,7 @@ export default function AdminDashboard() {
 
         <Tabs defaultValue="citas" className="space-y-6">
           {/* Reemplazar la sección de TabsList con esta implementación simplificada */}
-          <TabsList className="grid grid-cols-4 w-full max-w-md">
+          <TabsList className="flex justify-between w-full max-w-3xl">
             <TabsTrigger value="citas" className="px-4">
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
@@ -549,6 +667,12 @@ export default function AdminDashboard() {
               <div className="flex items-center gap-2">
                 <BarChart2 className="h-4 w-4" />
                 <span>Estadísticas</span>
+              </div>
+            </TabsTrigger>
+            <TabsTrigger value="historicos" className="px-4">
+              <div className="flex items-center gap-2">
+                <History className="h-4 w-4" />
+                <span>Clientes</span>
               </div>
             </TabsTrigger>
           </TabsList>
@@ -574,6 +698,8 @@ export default function AdminDashboard() {
                           <TableHead>Hora</TableHead>
                           <TableHead>Servicio</TableHead>
                           <TableHead>Empleado</TableHead>
+                          <TableHead>Correo</TableHead>
+                          <TableHead>Teléfono</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -584,6 +710,8 @@ export default function AdminDashboard() {
                             <TableCell>{c.hora}</TableCell>
                             <TableCell>{c.servicio.nombre}</TableCell>
                             <TableCell>{c.empleado?.nombre || "(sin asignar)"}</TableCell>
+                            <TableCell>{c.correo || "-"}</TableCell>
+                            <TableCell>{c.telefono || "-"}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -1234,6 +1362,21 @@ export default function AdminDashboard() {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+          {/* Sección de Clientes Históricos */}
+          <TabsContent value="historicos" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <History className="h-5 w-5 text-primary" />
+                  Clientes Históricos
+                </CardTitle>
+                <CardDescription>Registro de clientes que han visitado tu negocio anteriormente</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ClientesHistoricos slug={slug as string} />
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </main>
