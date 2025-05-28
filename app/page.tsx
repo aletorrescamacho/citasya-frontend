@@ -29,6 +29,9 @@ export default function LandingPage() {
             <Link href="#afiliados" className="text-sm font-medium transition-colors hover:text-primary">
               Empresas Afiliadas
             </Link>
+            <Link href="/ayuda" className="text-sm font-medium transition-colors hover:text-primary">
+              Ayuda
+            </Link>
           </nav>
           <Link href="/admin/login">
             <Button className="rounded-full">Iniciar Sesión como Admin</Button>
@@ -57,11 +60,18 @@ export default function LandingPage() {
                   </p>
                 </div>
                 <div className="flex flex-col gap-2 min-[400px]:flex-row pt-4">
-                  <Button size="lg" className="rounded-full bg-primary hover:bg-primary/90 text-white">
-                    Solicitar Demo
+                  <Button size="lg" className="rounded-full bg-primary hover:bg-primary/90 text-white" asChild>
+                    <Link href="https://wa.me/584147507522" target="_blank" rel="noopener noreferrer">
+                      Solicitar más información
+                    </Link>
                   </Button>
-                  <Button size="lg" variant="outline" className="rounded-full border-primary/20 hover:bg-primary/5">
-                    Conocer Más
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="rounded-full border-primary/20 hover:bg-primary/5"
+                    asChild
+                  >
+                    <Link href="#servicios">Conocer Más</Link>
                   </Button>
                 </div>
               </div>
@@ -121,11 +131,13 @@ export default function LandingPage() {
                   <div className="mb-2 inline-flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
                     <Clock className="h-6 w-6 text-primary" />
                   </div>
-                  <CardTitle>Recordatorios Automáticos</CardTitle>
-                  <CardDescription>Reduce las inasistencias</CardDescription>
+                  <CardTitle>Confirmación Instantánea</CardTitle>
+                  <CardDescription>Correo inmediato tras reservar</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p>Envía recordatorios automáticos por email o SMS para reducir las cancelaciones de última hora.</p>
+                  <p>
+                    Informa automáticamente a tus clientes que su cita fue registrada, sin complicaciones ni demoras.
+                  </p>
                 </CardContent>
               </Card>
               <Card className="card-hover border-primary/10 bg-gradient-to-b from-white to-primary/5">
@@ -181,7 +193,7 @@ export default function LandingPage() {
                   <CardDescription>Pago único</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="text-4xl font-bold gradient-heading">$XXX USD</div>
+                  <div className="text-4xl font-bold gradient-heading">$20 USD</div>
                   <ul className="space-y-2">
                     <li className="flex items-center">
                       <div className="mr-2 flex h-5 w-5 items-center justify-center rounded-full bg-primary/10">
@@ -219,7 +231,7 @@ export default function LandingPage() {
                           <polyline points="20 6 9 17 4 12"></polyline>
                         </svg>
                       </div>
-                      Personalización de la plataforma
+                      Creación de cuentas y entrega de credenciales
                     </li>
                     <li className="flex items-center">
                       <div className="mr-2 flex h-5 w-5 items-center justify-center rounded-full bg-primary/10">
@@ -238,7 +250,7 @@ export default function LandingPage() {
                           <polyline points="20 6 9 17 4 12"></polyline>
                         </svg>
                       </div>
-                      Capacitación del personal
+                      Guías y manuales de uso paso a paso
                     </li>
                     <li className="flex items-center">
                       <div className="mr-2 flex h-5 w-5 items-center justify-center rounded-full bg-primary/10">
@@ -257,10 +269,14 @@ export default function LandingPage() {
                           <polyline points="20 6 9 17 4 12"></polyline>
                         </svg>
                       </div>
-                      Migración de datos existentes
+                      Videos explicativos para el equipo
                     </li>
                   </ul>
-                  <Button className="w-full rounded-full mt-4">Solicitar Cotización</Button>
+                  <Button className="w-full rounded-full mt-4" asChild>
+                    <Link href="https://wa.me/584147507522" target="_blank" rel="noopener noreferrer">
+                      Contactar por WhatsApp
+                    </Link>
+                  </Button>
                 </CardContent>
               </Card>
               <Card className="card-hover border-2 border-secondary/20 overflow-hidden relative">
@@ -281,7 +297,7 @@ export default function LandingPage() {
                       WebkitTextFillColor: "transparent",
                     }}
                   >
-                    $XX USD
+                    $20 USD
                   </div>
                   <ul className="space-y-2">
                     <li className="flex items-center">
@@ -361,7 +377,11 @@ export default function LandingPage() {
                       Alojamiento en la nube
                     </li>
                   </ul>
-                  <Button className="w-full rounded-full mt-4 bg-secondary hover:bg-secondary/90">Suscribirse</Button>
+                  <Button className="w-full rounded-full mt-4 bg-secondary hover:bg-secondary/90" asChild>
+                    <Link href="https://wa.me/584147507522" target="_blank" rel="noopener noreferrer">
+                      Contactar por WhatsApp
+                    </Link>
+                  </Button>
                 </CardContent>
               </Card>
             </div>
@@ -404,15 +424,21 @@ export default function LandingPage() {
                 </CardHeader>
                 <CardContent>
                   <Link
-                    href="https://wa.me/TUNUMERO"
+                    href="https://wa.me/584147507522"
                     target="_blank"
                     className="inline-flex items-center text-primary hover:underline"
                   >
-                    +XX XXX XXX XXXX
+                    +58 414 750 7522
                   </Link>
                   <p className="mt-2 text-muted-foreground">Respuesta rápida de lunes a viernes de 9:00 a 18:00</p>
-                  <Button variant="outline" className="mt-4 w-full rounded-full border-primary/20 hover:bg-primary/5">
-                    Enviar Mensaje
+                  <Button
+                    variant="outline"
+                    className="mt-4 w-full rounded-full border-primary/20 hover:bg-primary/5"
+                    asChild
+                  >
+                    <Link href="https://wa.me/584147507522" target="_blank" rel="noopener noreferrer">
+                      Enviar Mensaje
+                    </Link>
                   </Button>
                 </CardContent>
               </Card>
@@ -427,11 +453,11 @@ export default function LandingPage() {
                 </CardHeader>
                 <CardContent>
                   <Link
-                    href="https://instagram.com/TUINSTAGRAM"
+                    href="https://instagram.com/citasya.ve"
                     target="_blank"
                     className="inline-flex items-center text-secondary hover:underline"
                   >
-                    @citasya
+                    @citasya.ve
                   </Link>
                   <p className="mt-2 text-muted-foreground">
                     Síguenos para conocer nuestras novedades y casos de éxito
@@ -439,8 +465,11 @@ export default function LandingPage() {
                   <Button
                     variant="outline"
                     className="mt-4 w-full rounded-full border-secondary/20 hover:bg-secondary/5 text-secondary"
+                    asChild
                   >
-                    Seguir
+                    <Link href="https://instagram.com/citasya.ve" target="_blank" rel="noopener noreferrer">
+                      Seguir
+                    </Link>
                   </Button>
                 </CardContent>
               </Card>
@@ -461,33 +490,41 @@ export default function LandingPage() {
                   Quienes Confían en Nosotros
                 </h2>
                 <p className="max-w-[700px] text-muted-foreground md:text-xl">
-                  Estas empresas ya disfrutan de los beneficios de nuestro sistema de agendamiento
+                  Próximamente mostraremos las empresas que confían en nuestro sistema
                 </p>
               </div>
             </div>
 
-            {/* Espacio para empresas afiliadas (se llenará desde el backend) */}
-            <div className="grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4 mt-8">
-              {/* Este espacio se llenará con datos del backend */}
-              <div className="flex h-32 items-center justify-center rounded-xl border-2 border-dashed border-primary/25 p-4 transition-all hover:border-primary/50">
-                <p className="text-center text-sm text-muted-foreground">
-                  Datos de empresas afiliadas desde el backend
+            {/* Mensaje de próximamente */}
+            <div className="mt-8 p-10 rounded-xl border-2 border-dashed border-primary/25 bg-primary/5 text-center">
+              <div className="flex flex-col items-center justify-center gap-4">
+                <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-8 w-8 text-primary"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-bold text-primary">Próximamente</h3>
+                <p className="max-w-[500px] text-muted-foreground">
+                  Estamos trabajando para incorporar nuevas empresas a nuestra plataforma. ¡Sé de los primeros en unirte
+                  a nuestra red de socios!
                 </p>
-              </div>
-              <div className="flex h-32 items-center justify-center rounded-xl border-2 border-dashed border-primary/25 p-4 transition-all hover:border-primary/50">
-                <p className="text-center text-sm text-muted-foreground">
-                  Datos de empresas afiliadas desde el backend
-                </p>
-              </div>
-              <div className="flex h-32 items-center justify-center rounded-xl border-2 border-dashed border-primary/25 p-4 transition-all hover:border-primary/50">
-                <p className="text-center text-sm text-muted-foreground">
-                  Datos de empresas afiliadas desde el backend
-                </p>
-              </div>
-              <div className="flex h-32 items-center justify-center rounded-xl border-2 border-dashed border-primary/25 p-4 transition-all hover:border-primary/50">
-                <p className="text-center text-sm text-muted-foreground">
-                  Datos de empresas afiliadas desde el backend
-                </p>
+                <Button className="mt-4 rounded-full" asChild>
+                  <Link href="https://wa.me/584147507522" target="_blank" rel="noopener noreferrer">
+                    Quiero ser parte
+                  </Link>
+                </Button>
               </div>
             </div>
           </div>
@@ -507,10 +544,10 @@ export default function LandingPage() {
             © 2025 Citas Ya. Todos los derechos reservados.
           </p>
           <div className="flex items-center gap-4">
-            <Link href="#" className="text-sm font-medium transition-colors hover:text-primary">
+            <Link href="/terminos" className="text-sm font-medium transition-colors hover:text-primary">
               Términos
             </Link>
-            <Link href="#" className="text-sm font-medium transition-colors hover:text-primary">
+            <Link href="/privacidad" className="text-sm font-medium transition-colors hover:text-primary">
               Privacidad
             </Link>
           </div>
