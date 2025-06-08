@@ -61,7 +61,7 @@ export default function LandingPage() {
                 </div>
                 <div className="flex flex-col gap-2 min-[400px]:flex-row pt-4">
                   <Button size="lg" className="rounded-full bg-primary hover:bg-primary/90 text-white" asChild>
-                    <Link href="https://wa.me/584147507522" target="_blank" rel="noopener noreferrer">
+                    <Link href="https://wa.me/584127507522" target="_blank" rel="noopener noreferrer">
                       Solicitar más información
                     </Link>
                   </Button>
@@ -273,7 +273,7 @@ export default function LandingPage() {
                     </li>
                   </ul>
                   <Button className="w-full rounded-full mt-4" asChild>
-                    <Link href="https://wa.me/584147507522" target="_blank" rel="noopener noreferrer">
+                    <Link href="https://wa.me/584127507522" target="_blank" rel="noopener noreferrer">
                       Contactar por WhatsApp
                     </Link>
                   </Button>
@@ -378,7 +378,7 @@ export default function LandingPage() {
                     </li>
                   </ul>
                   <Button className="w-full rounded-full mt-4 bg-secondary hover:bg-secondary/90" asChild>
-                    <Link href="https://wa.me/584147507522" target="_blank" rel="noopener noreferrer">
+                    <Link href="https://wa.me/584127507522" target="_blank" rel="noopener noreferrer">
                       Contactar por WhatsApp
                     </Link>
                   </Button>
@@ -424,11 +424,11 @@ export default function LandingPage() {
                 </CardHeader>
                 <CardContent>
                   <Link
-                    href="https://wa.me/584147507522"
+                    href="https://wa.me/584127507522"
                     target="_blank"
                     className="inline-flex items-center text-primary hover:underline"
                   >
-                    +58 414 750 7522
+                    +58 412 750 7522
                   </Link>
                   <p className="mt-2 text-muted-foreground">Respuesta rápida de lunes a viernes de 9:00 a 18:00</p>
                   <Button
@@ -436,7 +436,7 @@ export default function LandingPage() {
                     className="mt-4 w-full rounded-full border-primary/20 hover:bg-primary/5"
                     asChild
                   >
-                    <Link href="https://wa.me/584147507522" target="_blank" rel="noopener noreferrer">
+                    <Link href="https://wa.me/584127507522" target="_blank" rel="noopener noreferrer">
                       Enviar Mensaje
                     </Link>
                   </Button>
@@ -521,7 +521,7 @@ export default function LandingPage() {
                   a nuestra red de socios!
                 </p>
                 <Button className="mt-4 rounded-full" asChild>
-                  <Link href="https://wa.me/584147507522" target="_blank" rel="noopener noreferrer">
+                  <Link href="https://wa.me/584127507522" target="_blank" rel="noopener noreferrer">
                     Quiero ser parte
                   </Link>
                 </Button>

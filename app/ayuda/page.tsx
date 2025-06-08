@@ -10,10 +10,7 @@ import {
   Play,
   HelpCircle,
   Download,
-  FileText,
   Video,
-  Users,
-  Calendar,
   Settings,
   BarChart3,
   MessageSquare,
@@ -65,7 +62,7 @@ export default function AyudaPage() {
 
             {/* Manuales de Usuario */}
             <TabsContent value="manuales" className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <Card className="card-hover border-primary/10">
                   <CardHeader>
                     <div className="flex items-center gap-3">
@@ -83,57 +80,7 @@ export default function AyudaPage() {
                       Aprende a configurar tu empresa, servicios y empleados desde cero.
                     </p>
                     <Button variant="outline" className="w-full" asChild>
-                      <Link href="#" className="flex items-center gap-2">
-                        <Download className="h-4 w-4" />
-                        Descargar PDF
-                      </Link>
-                    </Button>
-                  </CardContent>
-                </Card>
-
-                <Card className="card-hover border-primary/10">
-                  <CardHeader>
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-primary/10 rounded-lg">
-                        <Calendar className="h-6 w-6 text-primary" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-lg">Gestión de Citas</CardTitle>
-                        <CardDescription>Cómo administrar las reservas</CardDescription>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Manual completo para gestionar citas, horarios y disponibilidad.
-                    </p>
-                    <Button variant="outline" className="w-full" asChild>
-                      <Link href="#" className="flex items-center gap-2">
-                        <Download className="h-4 w-4" />
-                        Descargar PDF
-                      </Link>
-                    </Button>
-                  </CardContent>
-                </Card>
-
-                <Card className="card-hover border-primary/10">
-                  <CardHeader>
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-primary/10 rounded-lg">
-                        <Users className="h-6 w-6 text-primary" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-lg">Administración de Empleados</CardTitle>
-                        <CardDescription>Gestión del personal y horarios</CardDescription>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Guía para añadir empleados, asignar servicios y configurar horarios.
-                    </p>
-                    <Button variant="outline" className="w-full" asChild>
-                      <Link href="#" className="flex items-center gap-2">
+                      <Link href="/guia-configuracion-inicial.pdf" target="_blank" className="flex items-center gap-2">
                         <Download className="h-4 w-4" />
                         Descargar PDF
                       </Link>
@@ -158,32 +105,7 @@ export default function AyudaPage() {
                       Cómo interpretar y utilizar los reportes para mejorar tu negocio.
                     </p>
                     <Button variant="outline" className="w-full" asChild>
-                      <Link href="#" className="flex items-center gap-2">
-                        <Download className="h-4 w-4" />
-                        Descargar PDF
-                      </Link>
-                    </Button>
-                  </CardContent>
-                </Card>
-
-                <Card className="card-hover border-primary/10">
-                  <CardHeader>
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-primary/10 rounded-lg">
-                        <FileText className="h-6 w-6 text-primary" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-lg">Manual Completo</CardTitle>
-                        <CardDescription>Guía completa del sistema</CardDescription>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Manual completo con todas las funcionalidades del sistema.
-                    </p>
-                    <Button variant="outline" className="w-full" asChild>
-                      <Link href="#" className="flex items-center gap-2">
+                      <Link href="/reportes-y-estadisticas.pdf" target="_blank" className="flex items-center gap-2">
                         <Download className="h-4 w-4" />
                         Descargar PDF
                       </Link>
@@ -208,7 +130,7 @@ export default function AyudaPage() {
                       ¿Necesitas ayuda específica? Contacta directamente con nuestro equipo.
                     </p>
                     <Button className="w-full bg-secondary hover:bg-secondary/90" asChild>
-                      <Link href="https://wa.me/584147507522" target="_blank" className="flex items-center gap-2">
+                      <Link href="https://wa.me/584127507522" target="_blank" className="flex items-center gap-2">
                         <MessageSquare className="h-4 w-4" />
                         Contactar Soporte
                       </Link>
@@ -331,7 +253,7 @@ export default function AyudaPage() {
                 </CardHeader>
                 <CardContent className="text-center">
                   <Button className="bg-secondary hover:bg-secondary/90" asChild>
-                    <Link href="https://wa.me/584147507522" target="_blank">
+                    <Link href="https://wa.me/584127507522" target="_blank">
                       Solicitar Video Personalizado
                     </Link>
                   </Button>
@@ -412,7 +334,7 @@ export default function AyudaPage() {
                     <AccordionItem value="item-7" className="border border-primary/10 rounded-lg px-4">
                       <AccordionTrigger className="text-left">¿Cómo contacto al soporte técnico?</AccordionTrigger>
                       <AccordionContent className="text-muted-foreground">
-                        Puedes contactarnos por WhatsApp al +58 414 750 7522 de lunes a viernes de 9:00 a 18:00. También
+                        Puedes contactarnos por WhatsApp al +58 412 750 7522 de lunes a viernes de 9:00 a 18:00. También
                         puedes seguirnos en Instagram @citasya.ve para novedades.
                       </AccordionContent>
                     </AccordionItem>
@@ -439,7 +361,7 @@ export default function AyudaPage() {
                 </CardHeader>
                 <CardContent className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Button variant="outline" asChild>
-                    <Link href="https://wa.me/584147507522" target="_blank" className="flex items-center gap-2">
+                    <Link href="https://wa.me/584127507522" target="_blank" className="flex items-center gap-2">
                       <MessageSquare className="h-4 w-4" />
                       WhatsApp
                     </Link>
@@ -474,3 +396,4 @@ export default function AyudaPage() {
     </div>
   )
 }
+

@@ -163,7 +163,7 @@ export default function PrivacidadPage() {
                 través de:
               </p>
               <ul className="list-disc list-inside text-muted-foreground mt-2 space-y-1">
-                <li>WhatsApp: +58 414 750 7522</li>
+                <li>WhatsApp: +58 412 750 7522</li>
                 <li>Instagram: @citasya.ve</li>
               </ul>
               <p className="text-muted-foreground leading-relaxed mt-4">
