@@ -1,5 +1,9 @@
 "use client"
 
+import type React from "react"
+
+import { DialogTrigger } from "@/components/ui/dialog"
+
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
@@ -13,7 +17,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
-  Calendar,
   Clock,
   Users,
   Scissors,
@@ -24,6 +27,13 @@ import {
   ArrowLeft,
   AlertCircle,
   LogOut,
+  BarChart2,
+  TrendingUp,
+  PieChart,
+  Activity,
+  User,
+  History,
+  Search,
 } from "lucide-react"
 import {
   Dialog,
@@ -32,9 +42,31 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  PieChart as RechartsPieChart,
+  Pie,
+  Cell,
+  LineChart,
+  Line,
+} from "recharts"
+
+// Primero, importemos los componentes necesarios para el DatePicker
+// Añade estas importaciones junto con las demás importaciones al inicio del archivo
+import { format as formatDate, isAfter, isBefore } from "date-fns"
+import { es } from "date-fns/locale"
+import { CalendarIcon } from "lucide-react"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Calendar } from "@/components/ui/calendar"
 
 interface Servicio {
   id: number
@@ -56,6 +88,7 @@ interface Empleado {
   servicios: { servicioId: number }[]
 }
 
+// Primero, actualicemos la interfaz Cita para incluir correo y teléfono
 interface Cita {
   id: number
   clienteNombre: string
@@ -63,9 +96,152 @@ interface Cita {
   hora: string
   servicio: { nombre: string }
   empleado?: { nombre: string }
+  correo: string
+  telefono: string
+}
+
+interface ClienteHistorico {
+  id: number
+  nombre: string
+  cedula: string
+  correo: string
+  telefono: string
 }
 
 const diasSemana = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]
+
+// Agregar este array de duraciones permitidas después de la declaración de diasSemana
+const duracionesPermitidas = [
+  { valor: 30, etiqueta: "30 minutos" },
+  { valor: 60, etiqueta: "1 hora" },
+  { valor: 90, etiqueta: "1 hora y 30 minutos" },
+  { valor: 120, etiqueta: "2 horas" },
+  { valor: 150, etiqueta: "2 horas y 30 minutos" },
+  { valor: 180, etiqueta: "3 horas" },
+  { valor: 210, etiqueta: "3 horas y 30 minutos" },
+  { valor: 240, etiqueta: "4 horas" },
+  { valor: 270, etiqueta: "4 horas y 30 minutos" },
+  { valor: 300, etiqueta: "5 horas" },
+  { valor: 330, etiqueta: "5 horas y 30 minutos" },
+  { valor: 360, etiqueta: "6 horas" },
+]
+
+// Colores para los gráficos
+const COLORS = [
+  "#0088FE",
+  "#00C49F",
+  "#FFBB28",
+  "#FF8042",
+  "#8884D8",
+  "#82CA9D",
+  "#F06292",
+  "#4DB6AC",
+  "#FFD54F",
+  "#9575CD",
+]
+
+const ClientesHistoricos = ({ slug }: { slug: string }) => {
+  const [clientes, setClientes] = useState<ClienteHistorico[]>([])
+  const [searchTerm, setSearchTerm] = useState("")
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchClientesHistoricos = async () => {
+      setLoading(true)
+      setError(null)
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/clientes-historicos/${slug}`)
+
+        if (!response.ok) {
+          throw new Error(`Error: ${response.status}`)
+        }
+        const data: ClienteHistorico[] = await response.json()
+        setClientes(data)
+      } catch (error: any) {
+        setError(error.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchClientesHistoricos()
+  }, [slug])
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value)
+  }
+
+  const filteredClientes = clientes.filter(
+    (cliente) => cliente.nombre.toLowerCase().includes(searchTerm.toLowerCase()) || cliente.cedula.includes(searchTerm),
+  )
+
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Error</AlertTitle>
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
+    )
+  }
+
+  if (loading) {
+    return (
+      <div className="text-center py-8">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+        <p className="text-muted-foreground">Cargando datos de clientes históricos...</p>
+      </div>
+    )
+  }
+
+  if (clientes.length === 0) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        <User className="h-12 w-12 mx-auto mb-2 text-muted-foreground/50" />
+        <p>No hay datos de clientes históricos disponibles</p>
+        <p className="text-sm mt-2">No se han encontrado clientes con citas anteriores.</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Buscar por nombre o cédula..."
+          value={searchTerm}
+          onChange={handleSearchChange}
+          className="pl-10"
+        />
+      </div>
+
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Nombre</TableHead>
+              <TableHead>Cédula</TableHead>
+              <TableHead>Correo</TableHead>
+              <TableHead>Teléfono</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredClientes.map((cliente) => (
+              <TableRow key={cliente.id}>
+                <TableCell className="font-medium">{cliente.nombre}</TableCell>
+                <TableCell>{cliente.cedula}</TableCell>
+                <TableCell>{cliente.correo}</TableCell>
+                <TableCell>{cliente.telefono}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
+  )
+}
 
 export default function AdminDashboard() {
   const { slug } = useParams()
@@ -74,16 +250,65 @@ export default function AdminDashboard() {
   const [servicios, setServicios] = useState<Servicio[]>([])
   const [empleados, setEmpleados] = useState<Empleado[]>([])
   const [citas, setCitas] = useState<Cita[]>([])
+  const [totalCitas, setTotalCitas] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
 
-  const [nuevoServicio, setNuevoServicio] = useState({ nombre: "", duracion: "", precio: "" })
+  // Ahora, dentro del componente AdminDashboard, añade estos estados para el filtro de fechas
+  // Añade esto junto a los demás estados del componente
+  // Busca esta sección:
+  // const [fechaInicio, setFechaInicio] = useState<Date | undefined>(undefined)
+  // const [fechaFin, setFechaFin] = useState<Date | undefined>(undefined)
+
+  // Y reemplázala con:
+  const [fechaSeleccionada, setFechaSeleccionada] = useState<Date | undefined>(undefined)
+
+  const [stats, setStats] = useState({
+    porMes: {},
+    porEmpleado: {},
+    porServicio: {},
+    porDia: {},
+    porAnio: {},
+  })
+
+  useEffect(() => {
+    const fetchEstadisticas = async () => {
+      try {
+        const [mes, emp, serv, dia, anio] = await Promise.all([
+          fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/estadisticas/${slug}/citas-por-mes`).then((r) =>
+            r.json(),
+          ),
+          fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/estadisticas/${slug}/citas-por-empleado`).then((r) =>
+            r.json(),
+          ),
+          fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/estadisticas/${slug}/citas-por-servicio`).then((r) =>
+            r.json(),
+          ),
+          fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/estadisticas/${slug}/citas-por-dia-ultimos-7`).then((r) =>
+            r.json(),
+          ),
+          fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/estadisticas/${slug}/citas-por-anio`).then((r) =>
+            r.json(),
+          ),
+        ])
+        setStats({ porMes: mes, porEmpleado: emp, porServicio: serv, porDia: dia, porAnio: anio })
+      } catch (err) {
+        console.error("Error al cargar estadísticas", err)
+      }
+    }
+
+    if (slug) fetchEstadisticas()
+  }, [slug])
+
+  // Modificar el estado nuevoServicio para que duracion sea un número en lugar de string
+  const [nuevoServicio, setNuevoServicio] = useState({ nombre: "", duracion: 30, precio: "" })
   const [nuevoEmpleado, setNuevoEmpleado] = useState({ nombre: "" })
 
   const [servicioSeleccionado, setServicioSeleccionado] = useState<Servicio | null>(null)
   const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState<Empleado | null>(null)
 
-  const [editarServicio, setEditarServicio] = useState({ nombre: "", duracion: "", precio: "" })
+  // Modificar el estado editarServicio para que duracion sea un número
+  const [editarServicio, setEditarServicio] = useState({ nombre: "", duracion: 30, precio: "" })
   const [editarEmpleado, setEditarEmpleado] = useState({
     nombre: "",
     horarios: [] as Horario[],
@@ -96,6 +321,37 @@ export default function AdminDashboard() {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
   const [confirmAction, setConfirmAction] = useState<() => Promise<void>>(() => async () => {})
   const [confirmMessage, setConfirmMessage] = useState("")
+
+  // Preparar datos para los gráficos
+  const prepararDatosGraficos = () => {
+    // Datos para gráfico de barras por mes
+    const datosPorMes = Object.entries(stats.porMes).map(([mes, cantidad]) => ({
+      name: mes,
+      citas: cantidad,
+    }))
+
+    // Datos para gráfico de pastel por servicio
+    const datosPorServicio = Object.entries(stats.porServicio).map(([servicio, cantidad]) => ({
+      name: servicio,
+      value: cantidad,
+    }))
+
+    // Datos para gráfico de barras por empleado
+    const datosPorEmpleado = Object.entries(stats.porEmpleado).map(([empleado, cantidad]) => ({
+      name: empleado,
+      citas: cantidad,
+    }))
+
+    // Datos para gráfico de línea por día
+    const datosPorDia = Object.entries(stats.porDia).map(([dia, cantidad]) => ({
+      name: dia,
+      citas: cantidad,
+    }))
+
+    return { datosPorMes, datosPorServicio, datosPorEmpleado, datosPorDia }
+  }
+
+  const { datosPorMes, datosPorServicio, datosPorEmpleado, datosPorDia } = prepararDatosGraficos()
 
   // Verificar autenticación
   useEffect(() => {
@@ -111,25 +367,28 @@ export default function AdminDashboard() {
         setLoading(true)
         setError("")
         try {
-          const [serviciosRes, empleadosRes, citasRes] = await Promise.all([
+          const [serviciosRes, empleadosRes, citasRes, totalCitasRes] = await Promise.all([
             fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/empresa/${slug}/servicios`),
             fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/empresa/${slug}/empleados`),
             fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/citas/${slug}`),
+            fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/citas/${slug}/total`),
           ])
 
-          if (!serviciosRes.ok || !empleadosRes.ok || !citasRes.ok) {
+          if (!serviciosRes.ok || !empleadosRes.ok || !citasRes.ok || !totalCitasRes.ok) {
             throw new Error("Error al cargar datos")
           }
 
-          const [serviciosData, empleadosData, citasData] = await Promise.all([
+          const [serviciosData, empleadosData, citasData, totalCitasData] = await Promise.all([
             serviciosRes.json(),
             empleadosRes.json(),
             citasRes.json(),
+            totalCitasRes.json(),
           ])
 
           setServicios(serviciosData)
           setEmpleados(empleadosData)
           setCitas(citasData)
+          setTotalCitas(totalCitasData.total)
         } catch (err) {
           setError("Error al cargar datos. Por favor, intenta nuevamente.")
           console.error(err)
@@ -148,7 +407,8 @@ export default function AdminDashboard() {
   }
 
   const crearServicio = async () => {
-    const duracion = Number.parseInt(nuevoServicio.duracion)
+    // Modificar la función crearServicio para que no necesite convertir la duración
+    const duracion = nuevoServicio.duracion
     const precio = Number.parseFloat(nuevoServicio.precio)
     if (!nuevoServicio.nombre || isNaN(duracion) || duracion < 1 || isNaN(precio) || precio < 0) {
       setError("Datos inválidos para servicio")
@@ -199,7 +459,8 @@ export default function AdminDashboard() {
 
   const editarServicioSubmit = async () => {
     if (!servicioSeleccionado) return
-    const duracion = Number.parseInt(editarServicio.duracion)
+    // Modificar la función editarServicioSubmit para que no necesite convertir la duración
+    const duracion = editarServicio.duracion
     const precio = Number.parseFloat(editarServicio.precio)
     if (!editarServicio.nombre || isNaN(duracion) || duracion < 1 || isNaN(precio) || precio < 0) {
       setError("Datos inválidos al editar servicio")
@@ -266,6 +527,7 @@ export default function AdminDashboard() {
     const empleado = empleados.find((e) => e.id === id)
     if (empleado) {
       setEmpleadoSeleccionado(empleado)
+      // Modificar la función que establece el estado de editarServicio al seleccionar un servicio
       setEditarEmpleado({
         nombre: empleado.nombre,
         horarios: empleado.horarios || [],
@@ -327,6 +589,30 @@ export default function AdminDashboard() {
       month: "2-digit",
       year: "numeric",
     })
+  }
+
+  // Añade esta función para filtrar las citas por fecha
+  // Coloca esta función junto a las demás funciones del componente
+  // Busca la función citasFiltradas y reemplázala con:
+  const citasFiltradas = citas.filter((cita) => {
+    if (!fechaSeleccionada) return true
+
+    try {
+      // Convertir ambas fechas a formato YYYY-MM-DD para comparación simple
+      const fechaCitaStr = cita.fecha.split("T")[0] // Asegurarse de obtener solo la parte de la fecha
+      const fechaSeleccionadaStr = fechaSeleccionada.toISOString().split("T")[0]
+
+      return fechaCitaStr === fechaSeleccionadaStr
+    } catch (error) {
+      console.error("Error al filtrar cita:", error, cita)
+      return false
+    }
+  })
+
+  // Función para limpiar los filtros
+  // Reemplaza la función limpiarFiltros con:
+  const limpiarFiltros = () => {
+    setFechaSeleccionada(undefined)
   }
 
   if (loading) {
@@ -396,18 +682,37 @@ export default function AdminDashboard() {
         )}
 
         <Tabs defaultValue="citas" className="space-y-6">
-          <TabsList className="grid grid-cols-3 w-full max-w-md">
-            <TabsTrigger value="citas" className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              <span>Citas</span>
+          {/* Reemplazar la sección de TabsList con esta implementación simplificada */}
+          <TabsList className="flex justify-between w-full max-w-3xl">
+            <TabsTrigger value="citas" className="px-4">
+              <div className="flex items-center gap-2">
+                <CalendarIcon className="h-4 w-4" />
+                <span>Citas</span>
+              </div>
             </TabsTrigger>
-            <TabsTrigger value="servicios" className="flex items-center gap-2">
-              <Scissors className="h-4 w-4" />
-              <span>Servicios</span>
+            <TabsTrigger value="servicios" className="px-4">
+              <div className="flex items-center gap-2">
+                <Scissors className="h-4 w-4" />
+                <span>Servicios</span>
+              </div>
             </TabsTrigger>
-            <TabsTrigger value="empleados" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              <span>Empleados</span>
+            <TabsTrigger value="empleados" className="px-4">
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                <span>Empleados</span>
+              </div>
+            </TabsTrigger>
+            <TabsTrigger value="estadisticas" className="px-4">
+              <div className="flex items-center gap-2">
+                <BarChart2 className="h-4 w-4" />
+                <span>Estadísticas</span>
+              </div>
+            </TabsTrigger>
+            <TabsTrigger value="historicos" className="px-4">
+              <div className="flex items-center gap-2">
+                <History className="h-4 w-4" />
+                <span>Clientes</span>
+              </div>
             </TabsTrigger>
           </TabsList>
 
@@ -416,43 +721,117 @@ export default function AdminDashboard() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-primary" />
+                  <CalendarIcon className="h-5 w-5 text-primary" />
                   Citas Programadas
                 </CardTitle>
                 <CardDescription>Visualiza todas las citas programadas en tu negocio</CardDescription>
               </CardHeader>
+              {/* Reemplaza el CardContent de la sección de citas con este código: */}
+              {/* Busca la sección que comienza con <CardContent> dentro del TabsContent con value="citas" */}
+              {/* y reemplázala con el siguiente código: */}
               <CardContent>
-                {citas.length > 0 ? (
-                  <div className="rounded-md border">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Cliente</TableHead>
-                          <TableHead>Fecha</TableHead>
-                          <TableHead>Hora</TableHead>
-                          <TableHead>Servicio</TableHead>
-                          <TableHead>Empleado</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {citas.map((c) => (
-                          <TableRow key={c.id}>
-                            <TableCell className="font-medium">{c.clienteNombre}</TableCell>
-                            <TableCell>{formatFecha(c.fecha)}</TableCell>
-                            <TableCell>{c.hora}</TableCell>
-                            <TableCell>{c.servicio.nombre}</TableCell>
-                            <TableCell>{c.empleado?.nombre || "(sin asignar)"}</TableCell>
+                <div className="space-y-4">
+                  {/* Filtros de fecha */}
+                  {/* Ahora, reemplaza la sección de filtros de fecha en el CardContent de la sección de citas
+                  // Busca la sección que comienza con "Filtros de fecha" y reemplázala con: */}
+                  <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor="fecha-seleccionada">Seleccionar día</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            id="fecha-seleccionada"
+                            variant="outline"
+                            className="w-[240px] justify-start text-left font-normal"
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {fechaSeleccionada ? (
+                              formatDate(fechaSeleccionada, "EEEE d 'de' MMMM", { locale: es })
+                            ) : (
+                              <span>Seleccionar fecha</span>
+                            )}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                          <Calendar
+                            mode="single"
+                            selected={fechaSeleccionada}
+                            onSelect={setFechaSeleccionada}
+                            initialFocus
+                            locale={es}
+                            disabled={(date) => {
+                              // Solo permitir seleccionar desde hoy hasta 15 días en el futuro
+                              const today = new Date()
+                              today.setHours(0, 0, 0, 0)
+
+                              const maxDate = new Date()
+                              maxDate.setDate(maxDate.getDate() + 15)
+                              maxDate.setHours(23, 59, 59, 999)
+
+                              return isBefore(date, today) || isAfter(date, maxDate)
+                            }}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+
+                    {fechaSeleccionada && (
+                      <Button variant="ghost" onClick={limpiarFiltros} className="mt-6">
+                        Mostrar todas las citas
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Contador de resultados */}
+                  <div className="text-sm text-muted-foreground">
+                    {citasFiltradas.length === citas.length
+                      ? `Mostrando todas las citas (${citas.length})`
+                      : `Mostrando ${citasFiltradas.length} ${citasFiltradas.length === 1 ? "cita" : "citas"} para el ${fechaSeleccionada ? fechaSeleccionada.toLocaleDateString("es-ES", { day: "numeric", month: "long" }) : ""}`}
+                  </div>
+
+                  {/* Tabla de citas */}
+                  {citasFiltradas.length > 0 ? (
+                    <div className="rounded-md border">
+
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Cliente</TableHead>
+                            <TableHead>Fecha</TableHead>
+                            <TableHead>Hora</TableHead>
+                            <TableHead>Servicio</TableHead>
+                            <TableHead>Empleado</TableHead>
+                            <TableHead>Correo</TableHead>
+                            <TableHead>Teléfono</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Calendar className="h-12 w-12 mx-auto mb-2 text-muted-foreground/50" />
-                    <p>No hay citas programadas</p>
-                  </div>
-                )}
+                        </TableHeader>
+                        <TableBody>
+                          {citasFiltradas.map((c) => (
+                            <TableRow key={c.id}>
+                              <TableCell className="font-medium">{c.clienteNombre}</TableCell>
+                              <TableCell>{formatFecha(c.fecha)}</TableCell>
+                              <TableCell>{c.hora}</TableCell>
+                              <TableCell>{c.servicio.nombre}</TableCell>
+                              <TableCell>{c.empleado?.nombre || "(sin asignar)"}</TableCell>
+                              <TableCell>{c.correo || "-"}</TableCell>
+                              <TableCell>{c.telefono || "-"}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <CalendarIcon className="h-12 w-12 mx-auto mb-2 text-muted-foreground/50" />
+                      <p>No hay citas programadas para el rango de fechas seleccionado</p>
+                      {fechaSeleccionada && (
+                        <Button variant="link" onClick={limpiarFiltros} className="mt-2">
+                          Mostrar todas las citas
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -479,15 +858,26 @@ export default function AdminDashboard() {
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
+                    {/* Reemplazar el input de duración en el formulario de crear servicio (buscar la sección con id="duracion-servicio") */}
                     <div className="grid gap-2">
-                      <Label htmlFor="duracion-servicio">Duración (minutos)</Label>
-                      <Input
-                        id="duracion-servicio"
-                        type="number"
-                        min={1}
-                        placeholder="30"
-                        onChange={(e) => setNuevoServicio({ ...nuevoServicio, duracion: e.target.value })}
-                      />
+                      <Label htmlFor="duracion-servicio">Duración</Label>
+                      <Select
+                        value={nuevoServicio.duracion.toString()}
+                        onValueChange={(value) =>
+                          setNuevoServicio({ ...nuevoServicio, duracion: Number.parseInt(value) })
+                        }
+                      >
+                        <SelectTrigger id="duracion-servicio">
+                          <SelectValue placeholder="Selecciona la duración" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {duracionesPermitidas.map((duracion) => (
+                            <SelectItem key={duracion.valor} value={duracion.valor.toString()}>
+                              {duracion.etiqueta}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div className="grid gap-2">
                       <Label htmlFor="precio-servicio">Precio</Label>
@@ -547,9 +937,10 @@ export default function AdminDashboard() {
                                       size="icon"
                                       onClick={() => {
                                         setServicioSeleccionado(s)
+                                        // Modificar la función que establece el estado de editarServicio al seleccionar un servicio
                                         setEditarServicio({
                                           nombre: s.nombre,
-                                          duracion: s.duracion.toString(),
+                                          duracion: s.duracion,
                                           precio: s.precio.toString(),
                                         })
                                       }}
@@ -576,17 +967,26 @@ export default function AdminDashboard() {
                                         />
                                       </div>
                                       <div className="grid grid-cols-2 gap-4">
+                                        {/* Reemplazar el input de duración en el formulario de editar servicio */}
                                         <div className="grid gap-2">
-                                          <Label htmlFor="edit-duracion">Duración (min)</Label>
-                                          <Input
-                                            id="edit-duracion"
-                                            type="number"
-                                            min={1}
-                                            value={editarServicio.duracion}
-                                            onChange={(e) =>
-                                              setEditarServicio({ ...editarServicio, duracion: e.target.value })
+                                          <Label htmlFor="edit-duracion">Duración</Label>
+                                          <Select
+                                            value={editarServicio.duracion.toString()}
+                                            onValueChange={(value) =>
+                                              setEditarServicio({ ...editarServicio, duracion: Number.parseInt(value) })
                                             }
-                                          />
+                                          >
+                                            <SelectTrigger id="edit-duracion">
+                                              <SelectValue placeholder="Selecciona la duración" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                              {duracionesPermitidas.map((duracion) => (
+                                                <SelectItem key={duracion.valor} value={duracion.valor.toString()}>
+                                                  {duracion.etiqueta}
+                                                </SelectItem>
+                                              ))}
+                                            </SelectContent>
+                                          </Select>
                                         </div>
                                         <div className="grid gap-2">
                                           <Label htmlFor="edit-precio">Precio</Label>
@@ -891,6 +1291,199 @@ export default function AdminDashboard() {
                     <p>No hay empleados registrados</p>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Sección de Estadísticas */}
+          <TabsContent value="estadisticas" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Resumen de Estadísticas */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5 text-primary" />
+                    Resumen de Actividad
+                  </CardTitle>
+                  <CardDescription>Métricas clave de tu negocio</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex flex-col items-center justify-center p-4 bg-primary/5 rounded-lg">
+                      <CalendarIcon className="h-8 w-8 text-primary mb-2" />
+                      <p className="text-sm text-muted-foreground">Total Citas</p>
+                      <p className="text-2xl font-bold">{totalCitas}</p>
+                    </div>
+                    <div className="flex flex-col items-center justify-center p-4 bg-secondary/5 rounded-lg">
+                      <User className="h-8 w-8 text-secondary mb-2" />
+                      <p className="text-sm text-muted-foreground">Empleados</p>
+                      <p className="text-2xl font-bold">{empleados.length}</p>
+                    </div>
+                    <div className="flex flex-col items-center justify-center p-4 bg-primary/5 rounded-lg">
+                      <Scissors className="h-8 w-8 text-primary mb-2" />
+                      <p className="text-sm text-muted-foreground">Servicios</p>
+                      <p className="text-2xl font-bold">{servicios.length}</p>
+                    </div>
+                    <div className="flex flex-col items-center justify-center p-4 bg-secondary/5 rounded-lg">
+                      <Activity className="h-8 w-8 text-secondary mb-2" />
+                      <p className="text-sm text-muted-foreground">Tasa de Ocupación</p>
+                      <p className="text-2xl font-bold">
+                        {empleados.length > 0 ? Math.round((totalCitas / empleados.length) * 10) / 10 : 0}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Gráfico de Citas por Servicio */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center gap-2">
+                    <PieChart className="h-5 w-5 text-primary" />
+                    Citas por Servicio
+                  </CardTitle>
+                  <CardDescription>Distribución de citas según el tipo de servicio</CardDescription>
+                </CardHeader>
+                <CardContent className="flex justify-center items-center h-[300px]">
+                  {datosPorServicio.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RechartsPieChart>
+                        <Pie
+                          data={datosPorServicio}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={true}
+                          outerRadius={80}
+                          fill="#8884d8"
+                          dataKey="value"
+                          label={({ name, percent }) => {
+                            // Acortar el nombre si es necesario para la etiqueta en el gráfico
+                            const displayName = name.length > 12 ? `${name.substring(0, 10)}...` : name
+                            return `${(percent * 100).toFixed(0)}%`
+                          }}
+                        >
+                          {datosPorServicio.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(value) => [`${value} citas`, "Cantidad"]} />
+                        <Legend width={280} />
+                      </RechartsPieChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <PieChart className="h-12 w-12 mx-auto mb-2 text-muted-foreground/50" />
+                      <p>No hay datos disponibles</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Gráfico de Citas por Mes */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart2 className="h-5 w-5 text-primary" />
+                    Citas por Mes
+                  </CardTitle>
+                  <CardDescription>Evolución mensual de las citas</CardDescription>
+                </CardHeader>
+                <CardContent className="h-[300px]">
+                  {datosPorMes.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={datosPorMes} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip formatter={(value) => [`${value} citas`, "Cantidad"]} />
+                        <Bar dataKey="citas" fill="#0088FE" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <BarChart2 className="h-12 w-12 mx-auto mb-2 text-muted-foreground/50" />
+                      <p>No hay datos disponibles</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Gráfico de Citas por Empleado */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5 text-primary" />
+                    Citas por Empleado
+                  </CardTitle>
+                  <CardDescription>Distribución de citas por miembro del equipo</CardDescription>
+                </CardHeader>
+                <CardContent className="h-[300px]">
+                  {datosPorEmpleado.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={datosPorEmpleado}
+                        layout="vertical"
+                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis type="number" />
+                        <YAxis dataKey="name" type="category" width={100} />
+                        <Tooltip formatter={(value) => [`${value} citas`, "Cantidad"]} />
+                        <Bar dataKey="citas" fill="#00C49F" radius={[0, 4, 4, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Users className="h-12 w-12 mx-auto mb-2 text-muted-foreground/50" />
+                      <p>No hay datos disponibles</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Gráfico de Citas por Día (últimos 7 días) */}
+              <Card className="md:col-span-2">
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center gap-2">
+                    <Activity className="h-5 w-5 text-primary" />
+                    Citas por Día (últimos 7 días)
+                  </CardTitle>
+                  <CardDescription>Tendencia de citas en la última semana</CardDescription>
+                </CardHeader>
+                <CardContent className="h-[300px]">
+                  {datosPorDia.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={datosPorDia} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip formatter={(value) => [`${value} citas`, "Cantidad"]} />
+                        <Legend />
+                        <Line type="monotone" dataKey="citas" stroke="#8884d8" activeDot={{ r: 8 }} strokeWidth={2} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Activity className="h-12 w-12 mx-auto mb-2 text-muted-foreground/50" />
+                      <p>No hay datos disponibles</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+          {/* Sección de Clientes Históricos */}
+          <TabsContent value="historicos" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <History className="h-5 w-5 text-primary" />
+                  Clientes Históricos
+                </CardTitle>
+                <CardDescription>Registro de clientes que han visitado tu negocio anteriormente</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ClientesHistoricos slug={slug as string} />
               </CardContent>
             </Card>
           </TabsContent>
