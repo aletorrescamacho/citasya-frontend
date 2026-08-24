@@ -50,7 +50,7 @@ export default function ReservaPage() {
   const [servicios, setServicios] = useState<Servicio[]>([])
   const [empleados, setEmpleados] = useState<Empleado[]>([])
   const [horarios, setHorarios] = useState<HorarioDisponible[]>([])
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [currentStep, setCurrentStep] = useState(1)
   const [success, setSuccess] = useState(false)
@@ -76,7 +76,6 @@ export default function ReservaPage() {
 
   useEffect(() => {
     if (!slug) return
-    setLoading(true)
     fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/empresa/${slug}/servicios`)
       .then((res) => res.json())
       .then((data) => {
